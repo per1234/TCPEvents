@@ -19,9 +19,9 @@
 # Data can be events, request data, send data
 # This plugin is based on the network event receiver and sender plugins by bitmonster, and is compatible with them
 # 
-# $LastChangedDate: 2014-06-12 12:06:00 +0100$
-# $LastChangedRevision: 2 $
-# $LastChangedBy: miljbee $
+# $LastChangedDate: 2015-06-03 3:30:00 +0100$
+# $LastChangedRevision: 3 $
+# $LastChangedBy: per1234 $
 
 import eg
 
@@ -86,7 +86,7 @@ else:
 class ServerHandler(asynchat.async_chat):
     """Telnet engine class. Implements command line user interface."""
     
-    def __init__(self, sock, addr, hex_md5, cookie, plugin, server):
+    def __init__(self, sock, addr, password, plugin, server):
         log("Server Handler inited")
         self.plugin = plugin
         
@@ -101,8 +101,10 @@ class ServerHandler(asynchat.async_chat):
         self.state = self.state1
         self.ip = addr[0]
         self.payload = [self.ip] if self.plugin.includeSourceIP else []
-        self.hex_md5 = hex_md5
-        self.cookie = cookie
+        self.cookie = hex(random.randrange(65536))
+        self.cookie = self.cookie[len(self.cookie) - 4:]
+        self.hex_md5 = md5(self.cookie + ":" + password).hexdigest().upper()
+
         self.receivedDataName=""
                   
                 
@@ -272,9 +274,7 @@ class Server(asyncore.dispatcher):
     def __init__ (self, port, password, handler):
         try:
             self.handler = handler
-            self.cookie = hex(random.randrange(65536))
-            self.cookie = self.cookie[len(self.cookie) - 4:]
-            self.hex_md5 = md5(self.cookie + ":" + password).hexdigest().upper()
+            self.password = password
 
             # Call parent class constructor explicitly
             asyncore.dispatcher.__init__(self)
@@ -308,8 +308,7 @@ class Server(asyncore.dispatcher):
             ServerHandler(
                 sock, 
                 addr, 
-                self.hex_md5, 
-                self.cookie, 
+                self.password,
                 self.handler, 
                 self
             )
