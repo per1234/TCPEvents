@@ -19,8 +19,8 @@
 # Data can be events, request data, send data
 # This plugin is based on the network event receiver and sender plugins by bitmonster, and is compatible with them
 #
-# $LastChangedDate: 2015-06-03 3:30:00 +0100$
-# $LastChangedRevision: 3 $
+# $LastChangedDate: 2015-08-06 3:30:00 +0100$
+# $LastChangedRevision: 4 $
 # $LastChangedBy: per1234 $
 
 import eg
@@ -98,13 +98,16 @@ class ServerHandler(asynchat.async_chat):
 
         # Initialize input data buffer
         self.data = ''
-        self.state = self.state1
         self.ip = addr[0]
         self.payload = [self.ip] if self.plugin.includeSourceIP else []
-        self.cookie = hex(random.randrange(65536))
-        self.cookie = self.cookie[len(self.cookie) - 4:]
-        self.hex_md5 = md5(self.cookie + ":" + password).hexdigest().upper()
-
+        if (password != ""):
+            self.state = self.state1
+            self.cookie = hex(random.randrange(65536))
+            self.cookie = self.cookie[len(self.cookie) - 4:]
+            self.hex_md5 = md5(self.cookie + ":" + password).hexdigest().upper()
+        else:
+            self.clientType = "Network Event Sender"
+            self.state = self.state3
         self.receivedDataName=""
 
 
@@ -468,46 +471,46 @@ class SendEvent(eg.ActionBase):
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
             # obvious this one you'd never guess :-)
+            serverType="Network Event Receiver"
+            if (self.password != ""):
+                sock.sendall("quintessence\n\r")
+                # The server now returns a cookie, the protocol works like the
+                # APOP protocol. The server gives you a cookie you add :<password>
+                # calculate the md5 digest out of this and send it back
+                # if the digests match you are in.
+                # We do this so that no one can listen in on our password exchange
+                # much safer than plain text.
 
-            sock.sendall("quintessence\n\r")
+                cookie = sock.recv(128)
 
-            # The server now returns a cookie, the protocol works like the
-            # APOP protocol. The server gives you a cookie you add :<password>
-            # calculate the md5 digest out of this and send it back
-            # if the digests match you are in.
-            # We do this so that no one can listen in on our password exchange
-            # much safer than plain text.
+                # Trim all enters and whitespaces off
+                cookie = cookie.strip()
 
-            cookie = sock.recv(128)
+                # Combine the token <cookie>:<password>
+                token = cookie + ":" + self.password
 
-            # Trim all enters and whitespaces off
-            cookie = cookie.strip()
+                # Calculate the digest
+                digest = md5(token).hexdigest()
 
-            # Combine the token <cookie>:<password>
-            token = cookie + ":" + self.password
+                # add the enters
+                digest = digest + "\n"
 
-            # Calculate the digest
-            digest = md5(token).hexdigest()
+                # Send it to the server
+                sock.sendall("TCPEvents"+digest)
 
-            # add the enters
-            digest = digest + "\n"
+                # Get the answer
+                answer = sock.recv(512)
 
-            # Send it to the server
-            sock.sendall("TCPEvents"+digest)
-
-            # Get the answer
-            answer = sock.recv(512)
-
-            # If the password was correct and you are allowed to connect
-            # to the server, you'll get "accept"
-            if (answer.strip() != "accept"):
-                sock.close()
-                return False
-            elif (answer.strip("\n") == " accept"):
-                serverType="TCPEvents"
-            else:
-                serverType="Network Event Receiver"
-            #print "From Client : Server Type = " + serverType
+                # If the password was correct and you are allowed to connect
+                # to the server, you'll get "accept"
+                if (answer.strip() != "accept"):
+                    sock.close()
+                    return False
+                elif (answer.strip("\n") == " accept"):
+                    serverType="TCPEvents"
+                else:
+                    serverType="Network Event Receiver"
+                #print "From Client : Server Type = " + serverType
 
             # now just pipe those commands to the server
             if (self.eventPrefix is not None) and (len(self.eventPrefix)>0) and (serverType=="TCPEvents"):
