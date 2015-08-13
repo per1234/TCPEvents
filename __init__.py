@@ -471,7 +471,7 @@ class SendEvent(eg.ActionBase):
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
             # obvious this one you'd never guess :-)
-            serverType="Network Event Receiver"
+            serverType="TCPEvents"
             if (self.password != ""):
                 sock.sendall("quintessence\n\r")
                 # The server now returns a cookie, the protocol works like the
