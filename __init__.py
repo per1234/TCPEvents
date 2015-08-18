@@ -106,7 +106,7 @@ class ServerHandler(asynchat.async_chat):
             self.cookie = self.cookie[len(self.cookie) - 4:]
             self.hex_md5 = md5(self.cookie + ":" + password).hexdigest().upper()
         else:
-            self.clientType = "Network Event Sender"
+            self.clientType = "TCPEvents"
             self.state = self.state3
         self.receivedDataName=""
 
@@ -614,45 +614,46 @@ class SendData(eg.ActionBase):
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
             # obvious this one you'd never guess :-)
+            serverType="TCPEvents"
+            if (self.password != ""):
+                sock.sendall("quintessence\n\r")
 
-            sock.sendall("quintessence\n\r")
+                # The server now returns a cookie, the protocol works like the
+                # APOP protocol. The server gives you a cookie you add :<password>
+                # calculate the md5 digest out of this and send it back
+                # if the digests match you are in.
+                # We do this so that no one can listen in on our password exchange
+                # much safer than plain text.
 
-            # The server now returns a cookie, the protocol works like the
-            # APOP protocol. The server gives you a cookie you add :<password>
-            # calculate the md5 digest out of this and send it back
-            # if the digests match you are in.
-            # We do this so that no one can listen in on our password exchange
-            # much safer than plain text.
+                cookie = sock.recv(128)
 
-            cookie = sock.recv(128)
+                # Trim all enters and whitespaces off
+                cookie = cookie.strip()
 
-            # Trim all enters and whitespaces off
-            cookie = cookie.strip()
+                # Combine the token <cookie>:<password>
+                token = cookie + ":" + self.password
 
-            # Combine the token <cookie>:<password>
-            token = cookie + ":" + self.password
+                # Calculate the digest
+                digest = md5(token).hexdigest()
 
-            # Calculate the digest
-            digest = md5(token).hexdigest()
+                # add the enters
+                digest = digest + "\n"
 
-            # add the enters
-            digest = digest + "\n"
+                # Send it to the server
+                sock.sendall("TCPEvents"+digest)
 
-            # Send it to the server
-            sock.sendall("TCPEvents"+digest)
+                # Get the answer
+                answer = sock.recv(512)
 
-            # Get the answer
-            answer = sock.recv(512)
-
-            # If the password was correct and you are allowed to connect
-            # to the server, you'll get "accept"
-            if (answer.strip() != "accept"):
-                sock.close()
-                return False
-            elif (answer.strip("\n") == " accept"):
-                serverType="TCPEvents"
-            else:
-                serverType="Network Event Receiver"
+                # If the password was correct and you are allowed to connect
+                # to the server, you'll get "accept"
+                if (answer.strip() != "accept"):
+                    sock.close()
+                    return False
+                elif (answer.strip("\n") == " accept"):
+                    serverType="TCPEvents"
+                else:
+                    serverType="Network Event Receiver"
 
             if serverType=="TCPEvents":
                 sock.sendall("dataName %s\n" % self.dataName)
@@ -762,45 +763,46 @@ class RequestData(eg.ActionBase):
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
             # obvious this one you'd never guess :-)
+            serverType="TCPEvents"
+            if (self.password != ""):
+                sock.sendall("quintessence\n\r")
 
-            sock.sendall("quintessence\n\r")
+                # The server now returns a cookie, the protocol works like the
+                # APOP protocol. The server gives you a cookie you add :<password>
+                # calculate the md5 digest out of this and send it back
+                # if the digests match you are in.
+                # We do this so that no one can listen in on our password exchange
+                # much safer than plain text.
 
-            # The server now returns a cookie, the protocol works like the
-            # APOP protocol. The server gives you a cookie you add :<password>
-            # calculate the md5 digest out of this and send it back
-            # if the digests match you are in.
-            # We do this so that no one can listen in on our password exchange
-            # much safer than plain text.
+                cookie = sock.recv(128)
 
-            cookie = sock.recv(128)
+                # Trim all enters and whitespaces off
+                cookie = cookie.strip()
 
-            # Trim all enters and whitespaces off
-            cookie = cookie.strip()
+                # Combine the token <cookie>:<password>
+                token = cookie + ":" + self.password
 
-            # Combine the token <cookie>:<password>
-            token = cookie + ":" + self.password
+                # Calculate the digest
+                digest = md5(token).hexdigest()
 
-            # Calculate the digest
-            digest = md5(token).hexdigest()
+                # add the enters
+                digest = digest + "\n"
 
-            # add the enters
-            digest = digest + "\n"
+                # Send it to the server
+                sock.sendall("TCPEvents"+digest)
 
-            # Send it to the server
-            sock.sendall("TCPEvents"+digest)
+                # Get the answer
+                answer = sock.recv(512)
 
-            # Get the answer
-            answer = sock.recv(512)
-
-            # If the password was correct and you are allowed to connect
-            # to the server, you'll get "accept"
-            if (answer.strip() != "accept"):
-                sock.close()
-                return False
-            elif (answer.strip("\n") == " accept"):
-                serverType="TCPEvents"
-            else:
-                serverType="Network Event Receiver"
+                # If the password was correct and you are allowed to connect
+                # to the server, you'll get "accept"
+                if (answer.strip() != "accept"):
+                    sock.close()
+                    return False
+                elif (answer.strip("\n") == " accept"):
+                    serverType="TCPEvents"
+                else:
+                    serverType="Network Event Receiver"
 
             if serverType=="TCPEvents":
                 dataRequest = []
