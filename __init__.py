@@ -117,8 +117,7 @@ class ServerHandler(asynchat.async_chat):
 
 
     def collect_incoming_data(self, data):
-        """Put data read from socket to a buffer
-        """
+        """Put data read from socket to a buffer"""
         # Collect data in input buffer
         log("<<" + repr(data))
         self.data = self.data + data
@@ -150,22 +149,18 @@ class ServerHandler(asynchat.async_chat):
             self.push("close\n")
             self.close_when_done()
         except:
-            eg.PrintError("Error in ServerHandler.initiate_close (push/close_when_done)")
-            eg.PrintError("Unexpected error: " + str(sys.exc_info()))
+            eg.PrintError("Error in ServerHandler.initiate_close(push/close_when_done): " + str(sys.exc_info()))
         #asynchat.async_chat.handle_close(self)
         self.plugin.EndLastEvent()
         self.state = self.state1
         try:
             self.close()
         except:
-            eg.PrintError("Error in ServerHandler.initiate_close (close)")
-            eg.PrintError("Unexpected error: " + str(sys.exc_info()))
+            eg.PrintError("Error in ServerHandler.initiate_close (close)" + str(sys.exc_info()))
 
 
     def state1(self, line):
-        """
-        get keyword "quintessence\n" and send cookie
-        """
+        """get keyword "quintessence\n" and send cookie"""
         if line == "quintessence":
             self.state = self.state2
             self.push(self.cookie + "\n")
@@ -174,8 +169,7 @@ class ServerHandler(asynchat.async_chat):
 
 
     def state2(self, line):
-        """get md5 digest
-        """
+        """get MD5 digest"""
         line=line.strip()
         digest = line.strip()[-32:]
         if digest == "":
@@ -188,7 +182,7 @@ class ServerHandler(asynchat.async_chat):
             self.push(" accept\n")
             self.state = self.state3
         else:
-            eg.PrintError("NetworkReceiver md5 error")
+            eg.PrintError("NetworkReceiver MD5 error")
             self.initiate_close()
 
 
@@ -201,7 +195,7 @@ class ServerHandler(asynchat.async_chat):
                 try:
                     self.payload.append(eval(line[8:])[0])
                 except:
-                    eg.PrintError("Unable to eval the payload, sending the full string")
+                    eg.PrintError("Unable to eval the payload, receiving the full string")
                     self.payload.append(line[8:])
             else :
                 self.payload.append(line[8:])
@@ -299,8 +293,7 @@ class Server(asyncore.dispatcher):
             #self.listen (1024)
             self.listen(5)
         except:
-            eg.PrintError("TCPEvents: Error in Server.__init__:")
-            eg.PrintError("TCPEvents: "+ str(sys.exc_info()))
+            eg.PrintError("TCPEvents: Error in Server.__init__: " + str(sys.exc_info()))
 
     def handle_accept (self):
         """Called by asyncore engine when new connection arrives"""
@@ -316,9 +309,7 @@ class Server(asyncore.dispatcher):
                 self
             )
         except:
-            eg.PrintError("TCPEvents: Error in handle accept:")
-            eg.PrintError("!!!TCPEvents: " +str(sys.exc_info()))
-
+            eg.PrintError("TCPEvents: Error in handle accept: " + str(sys.exc_info()))
 
 class TCPEvents(eg.PluginBase):
     text = Text
@@ -395,7 +386,7 @@ class SendEvent(eg.ActionBase):
     name = "Send an Event"
 
     def __call__(self,destIP, destPort ,passwd ,evtPref ,evtSuf ,evtPayloadStr, evtPayload):
-        if destIP=="": eg.PrintError("Destination address can not be guessed !")
+        if destIP=="": eg.PrintError("Destination address can not be guessed")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
@@ -405,8 +396,7 @@ class SendEvent(eg.ActionBase):
             try:
                 self.eventPayload=eval(evtPayloadStr)
             except:
-                eg.PrintError("Unable to evaluate the payload. Payload must be a valid python expression (exemple : \"some\\\"Text\\\"\")")
-                eg.PrintError("Your string will be sent unevaluated.")
+                eg.PrintError("Unable to evaluate the payload. Payload must be a valid python expression(example: \"some\\\"Text\\\"\"). Your string will be sent unevaluated.")
                 self.eventPayload=evtPayloadStr
         else:
             self.eventPayload=evtPayload
@@ -476,7 +466,7 @@ class SendEvent(eg.ActionBase):
                 sock.sendall("quintessence\n\r")
                 # The server now returns a cookie, the protocol works like the
                 # APOP protocol. The server gives you a cookie you add :<password>
-                # calculate the md5 digest out of this and send it back
+                # calculate the MD5 digest out of this and send it back
                 # if the digests match you are in.
                 # We do this so that no one can listen in on our password exchange
                 # much safer than plain text.
@@ -541,7 +531,7 @@ class SendEvent(eg.ActionBase):
             if eg.debugLevel:
                 eg.PrintTraceback()
             sock.close()
-            self.PrintError("An error occured while sending your event !")
+            self.PrintError("An error occured while sending your event")
             return None
 
 
@@ -550,7 +540,7 @@ class SendData(eg.ActionBase):
     name = "Send Data"
 
     def __call__(self,destIP, destPort ,passwd , dataName, dataToEval, data):
-        if destIP=="": eg.PrintError("Destination address can not be guessed !")
+        if destIP=="": eg.PrintError("Destination address field is blank")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
@@ -559,7 +549,7 @@ class SendData(eg.ActionBase):
             try:
                 self.data=eval(dataToEval)
             except:
-                eg.PrintError("Error evaluating " + str(dataToEval)+ ". Sending None to the server ...")
+                eg.PrintError("Error evaluating " + str(dataToEval)+ ". Sending None to the server.")
                 self.data=None
         else:
             self.data=data
@@ -620,7 +610,7 @@ class SendData(eg.ActionBase):
 
                 # The server now returns a cookie, the protocol works like the
                 # APOP protocol. The server gives you a cookie you add :<password>
-                # calculate the md5 digest out of this and send it back
+                # calculate the MD5 digest out of this and send it back
                 # if the digests match you are in.
                 # We do this so that no one can listen in on our password exchange
                 # much safer than plain text.
@@ -665,7 +655,7 @@ class SendData(eg.ActionBase):
                 sock.sendall("close\n")
                 sock.close()
             else:
-                eg.PrintError("Warning: the server isn't a TCPEvents server (is it a Network Event Receiver ?). Your data will be sent in the Payload !")
+                eg.PrintError("The server isn't a TCPEvents server(is it a Network Event Receiver?). Your data will be sent in the payload.")
                 sock.sendall("payload %s\n" % self.dataName.encode(eg.systemEncoding))
                 sock.sendall("payload %s\n" % str(self.data).encode(eg.systemEncoding))
                 sock.sendall("payload withoutRelease\n")
@@ -711,7 +701,7 @@ class RequestData(eg.ActionBase):
     name = "Request Data from a remote host"
 
     def __call__(self,destIP, destPort ,passwd , data):
-        if destIP=="": eg.PrintError("Destination address can not be guessed !")
+        if destIP=="": eg.PrintError("Destination address field is blank")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
@@ -769,7 +759,7 @@ class RequestData(eg.ActionBase):
 
                 # The server now returns a cookie, the protocol works like the
                 # APOP protocol. The server gives you a cookie you add :<password>
-                # calculate the md5 digest out of this and send it back
+                # calculate the MD5 digest out of this and send it back
                 # if the digests match you are in.
                 # We do this so that no one can listen in on our password exchange
                 # much safer than plain text.
@@ -834,7 +824,7 @@ class RequestData(eg.ActionBase):
                     eg.PrintError("The server didn't send back a response. It might not be able to evaluate the request (" + self.data +"==>" + answer + ").")
                     result=None
             else:
-                eg.PrintError("Warning: the server isn't a TCPEvents server (is it a Network Event Receiver ?). Your request will be sent in the Payload !")
+                eg.PrintError("The server isn't a TCPEvents server(is it a Network Event Receiver?). Your request will be sent in the Payload")
                 sock.sendall("payload %s\n" % str(self.data).encode(eg.systemEncoding))
                 sock.sendall("payload withoutRelease\n")
                 sock.sendall("RequestData".encode(eg.systemEncoding) + "\n")
