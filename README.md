@@ -13,3 +13,5 @@ Forked from http://eventghost.org/forum/viewtopic.php?p=16803 by miljbee
 #### Usage
 - The original documentation is [here](http://eventghost.org/forum/viewtopic.php?p=16803).
 - Leave the password field blank in the plugin configurations to disable authentication.
+- Connection Timeout(s) - Maximum number of seconds to attempt to connect to the server before the event send fails.
+- Communication Timeout(s) - Maximum number of seconds to attempt communication with the server before the event send fails.
