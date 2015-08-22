@@ -23,11 +23,79 @@
 # $LastChangedRevision: 4 $
 # $LastChangedBy: per1234 $
 
+
+README = """\
+<p>Send and receive events and data over a network. TCPEvents was created as a replacement for the very limited Network Event Sender and Receiver plugins and adds many enhancements. It is fully compatible with the original Network Event Sender/Receiver plugins. This is a fork of the <a href="http://www.eventghost.net/forum/viewtopic.php?t=2944">original TCPEvents</a> which appears to have been abandoned. It fixes a security vulnerability and adds some useful features.</p>
+
+
+<h4></a>Usage</h4>
+<p>You can use {} in most configuration fields to have EventGhost replace the content with the corresponding variable.</p>
+
+<ul>
+<li><p><strong>Plugin Configuration</strong>:</p>
+<ul>
+<li><strong>TCP/IP Port</strong> - The port used for receiving.</li>
+<li><strong>Password</strong> - The password must match the password used by the sender. Leave the password field blank to disable authentication. Unauthenticated operation is not supported by the Network Event Sender/Receiver plugin.</li>
+<li><strong>Default Event Prefix</strong> - The prefix to use on received events unless a prefix is specified by the sender.</li>
+<li><strong>Add source IP to the payload</strong> - If checked the sender's IP address will be included with the payload of received events.</li>
+</ul></li>
+
+<li><p><strong>Send an Event</strong></p>
+<ul>
+<li><strong>Address</strong> - The IP address to send the event to.</li>
+<li><strong>TCP/IP port</strong> - The port to send the event to. This should match the port setting in the plugin configuration of the receiver.</li>
+<li><strong>Password</strong> - Leave blank to disable authentication.</li>
+<li><strong>Prefix</strong> - Prefix of the sent event. If the prefix is not specified then the default prefix specified in the plugin configuration of the receiver will be used. Custom prefix is not supported by the Network Event Sender/Receiver plugin.</li>
+<li><strong>Suffix</strong> - Suffix of the sent event.</li>
+<li><strong>Payload(Python expr.)</strong> - If you want to send a plain text string write it between quotes. You can send/receive payload of various types(strings, numbers, lists, dicts, tuples, datetime, etc.).</li>
+<li><strong>Connection Timeout(s)</strong> - Maximum number of seconds to attempt to connect to the server before the event send fails. Any other operation in EventGhost will be blocked until the send is completed or times out so it is important to find the smallest value that still allows for reliable communication.</li>
+<li><strong>Communication Timeout(s)</strong> - Maximum number of seconds to attempt communication with the server before the event send fails.</li>
+</ul></li>
+
+<li><p><strong>Send Data</strong> - When sending data, the server won't produce any event. It will only store it with the provided name. The stored data can be retrieved at any time using the data name. This action is not supported by the Network Event Sender/Receiver plugins. See the <strong>Send an Event section</strong> for documentation of duplicate fields.</p>
+<ul>
+<li><strong>Name</strong> - The name is used to retrieve received data.</li>
+<li><strong>Data(Python expression)</strong> - Data to send.</li>
+</ul></li>
+
+<li><p><strong>Retrieve Received Data</strong> - The retrived data stored under the name is returned as eg.result. This action is not supported by the Network Event Sender/Receiver plugins.</p>
+<ul>
+<li><strong>Name of the data to retrieve</strong> - Use the data name specified in the Send Data action.</li>
+</ul></li>
+
+<li><p><strong>Request Data from a remote host</strong> - The response is returned as eg.result. No event is created. This action is not supported by the Network Event Sender/Receiver plugins. See the 
+<strong>Send an Event</strong> section for documentation of duplicate fields.</p>
+<ul>
+<li><strong>Python expression</strong> - This expression is evaluated on the receiver and the result is sent back</li>
+</ul></li>
+</ul>
+
+
+<h4>Acknowledgements</h4>
+<ul>
+<li>TCPEvents is based on the Network Event Sender and Receiver plugins by bitmonster, the creator of EventGhost.</li>
+<li>TCPEvents was written by EventGhost forum member miljbee.</li>
+</ul>
+
+
+<h4>Changelog</h4>
+<ul>
+<li>see <a href="http://www.eventghost.net/forum/viewtopic.php?t=2944">http://www.eventghost.net/forum/viewtopic.php?t=2944</a> for the original changelog</li>
+<li>Security vulnerability patch</li>
+<li>Unauthenticated option</li>
+<li>Set timeouts via configuration</li>
+</ul>
+
+"""
+
+
 import eg
 
 eg.RegisterPlugin(
     name = "TCP Events",
+    url = "https://github.com/per1234/TCPEvents",
     description = "Receives and sends events and/or data over TCP",
+    help = README,
     version = "2.1." + "$LastChangedRevision: 0 $".split()[1],
     author = "miljbee",
     canMultiLoad = True,
@@ -869,4 +937,3 @@ class RequestData(eg.ActionBase):
             sock.close()
             self.PrintError("NetworkSender failed")
             return None
-
