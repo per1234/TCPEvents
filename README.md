@@ -21,6 +21,8 @@ You can use {} in most configuration fields to have EventGhost replace the conte
   - **Password** - The password must match the password used by the sender. Leave the password field blank to disable authentication. Unauthenticated operation is not supported by the Network Event Sender/Receiver plugin.
   - **Default Event Prefix** - The prefix to use on received events unless a prefix is specified by the sender.
   - **Add source IP to the payload** - If checked the sender's IP address will be included with the payload of received events.
+  - **Connection Timeout(seconds)** - Maximum number of seconds to attempt to connect to the server before the event send fails. Any other operation in EventGhost will be blocked until the send is completed or times out so it is important to find the smallest value that still allows for reliable communication.
+  - **Communication Timeout(seconds)** - Maximum number of seconds to attempt communication with the server before the event send fails.
 
 - **Send an Event**
   - **Address** - The IP address to send the event to.
@@ -29,8 +31,6 @@ You can use {} in most configuration fields to have EventGhost replace the conte
   - **Prefix** - Prefix of the sent event. If the prefix is not specified then the default prefix specified in the plugin configuration of the receiver will be used. Custom prefix is not supported by the Network Event Sender/Receiver plugin.
   - **Suffix** - Suffix of the sent event.
   - **Payload(Python expr.)** - If you want to send a plain text string write it between quotes. You can send/receive payload of various types(strings, numbers, lists, dicts, tuples, datetime, etc.).
-  - **Connection Timeout(s)** - Maximum number of seconds to attempt to connect to the server before the event send fails. Any other operation in EventGhost will be blocked until the send is completed or times out so it is important to find the smallest value that still allows for reliable communication.
-  - **Communication Timeout(s)** - Maximum number of seconds to attempt communication with the server before the event send fails.
 
 - **Send Data** - When sending data, the server won't produce any event. It will only store it with the provided name. The stored data can be retrieved at any time using the data name. This action is not supported by the Network Event Sender/Receiver plugins. See the **Send an Event section** for documentation of duplicate fields.
   - **Name** - The name is used to retrieve received data.

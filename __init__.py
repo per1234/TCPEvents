@@ -38,6 +38,8 @@ README = """\
 <li><strong>Password</strong> - The password must match the password used by the sender. Leave the password field blank to disable authentication. Unauthenticated operation is not supported by the Network Event Sender/Receiver plugin.</li>
 <li><strong>Default Event Prefix</strong> - The prefix to use on received events unless a prefix is specified by the sender.</li>
 <li><strong>Add source IP to the payload</strong> - If checked the sender's IP address will be included with the payload of received events.</li>
+<li><strong>Connection Timeout(seconds)</strong> - Maximum number of seconds to attempt to connect to the server before the event send fails. Any other operation in EventGhost will be blocked until the send is completed or times out so it is important to find the smallest value that still allows for reliable communication.</li>
+<li><strong>Communication Timeout(seconds)</strong> - Maximum number of seconds to attempt communication with the server before the event send fails.</li>
 </ul></li>
 
 <li><p><strong>Send an Event</strong></p>
@@ -48,8 +50,6 @@ README = """\
 <li><strong>Prefix</strong> - Prefix of the sent event. If the prefix is not specified then the default prefix specified in the plugin configuration of the receiver will be used. Custom prefix is not supported by the Network Event Sender/Receiver plugin.</li>
 <li><strong>Suffix</strong> - Suffix of the sent event.</li>
 <li><strong>Payload(Python expr.)</strong> - If you want to send a plain text string write it between quotes. You can send/receive payload of various types(strings, numbers, lists, dicts, tuples, datetime, etc.).</li>
-<li><strong>Connection Timeout(s)</strong> - Maximum number of seconds to attempt to connect to the server before the event send fails. Any other operation in EventGhost will be blocked until the send is completed or times out so it is important to find the smallest value that still allows for reliable communication.</li>
-<li><strong>Communication Timeout(s)</strong> - Maximum number of seconds to attempt communication with the server before the event send fails.</li>
 </ul></li>
 
 <li><p><strong>Send Data</strong> - When sending data, the server won't produce any event. It will only store it with the provided name. The stored data can be retrieved at any time using the data name. This action is not supported by the Network Event Sender/Receiver plugins. See the <strong>Send an Event section</strong> for documentation of duplicate fields.</p>
@@ -141,8 +141,13 @@ class Text:
     dataToSend = "Data (python expression): "
     dataBox = "Data"
     dataToReceive = "Python expression: "
-    timeoutBeforeTxt = "Connection Timeout(s): "
-    timeoutAfterTxt = "Communication Timeout(s): "
+    timeoutBox = "Send Timeout Duration"
+    connectionTimeout = "Connection Timeout(seconds): "
+    communicationTimeout = "Communication Timeout(seconds): "
+    
+    
+class DefaultValues:
+    defaultTimeout = 5.0
 
 
 
@@ -360,8 +365,7 @@ class Server(asyncore.dispatcher):
             # Bind to all interfaces of this host at specified port
             self.bind(('', port))
 
-            # Start listening for incoming requests
-            #self.listen (1024)
+            # Start listening for incoming requests. The parameter is the maximum number of queued connections.
             self.listen(5)
         except:
             eg.PrintError("TCPEvents: Error in Server.__init__: " + str(sys.exc_info()))
@@ -394,13 +398,15 @@ class TCPEvents(eg.PluginBase):
         self.AddAction(RequestData)
         self.server = None
 
-    def __start__(self, port, password, prefix,inclSrcIP):
+    def __start__(self, port, password, prefix, inclSrcIP, conTimeout=DefaultValues.defaultTimeout, comTimeout=DefaultValues.defaultTimeout):
         self.lock = threading.Lock()
         self.port = port
         self.password = password
         self.info.eventPrefix = prefix
         self.prefix=prefix
         self.includeSourceIP=inclSrcIP
+        self.connectionTimeout=conTimeout
+        self.communicationTimeout=comTimeout
         try:
             self.server = Server(self.port, self.password, self)
         except socket.error, exc:
@@ -419,7 +425,7 @@ class TCPEvents(eg.PluginBase):
         self.server = None
 
 
-    def Configure(self, port=1024, password="", prefix="TCP",inclSrcIP=False):
+    def Configure(self, port=1024, password="", prefix="TCP", inclSrcIP=True, conTimeout=DefaultValues.defaultTimeout, comTimeout=DefaultValues.defaultTimeout):
         text = self.text
         panel = eg.ConfigPanel()
 
@@ -427,18 +433,24 @@ class TCPEvents(eg.PluginBase):
         passwordCtrl = panel.TextCtrl(password, style=wx.TE_PASSWORD)
         eventPrefixCtrl = panel.TextCtrl(prefix)
         sourceIPCtrl = panel.CheckBox(inclSrcIP)
+        connectionTimeoutCtrl = panel.SpinNumCtrl(conTimeout, integerWidth=2, increment=0.01)
+        communicationTimeoutCtrl = panel.SpinNumCtrl(comTimeout, integerWidth=2, increment=0.01)
         st1 = panel.StaticText(text.port)
         st2 = panel.StaticText(text.password)
         st3 = panel.StaticText(text.eventPrefix)
         st4 = panel.StaticText(text.sourceIP)
-        eg.EqualizeWidths((st1, st2, st3, st4))
+        st5 = panel.StaticText(text.connectionTimeout)
+        st6 = panel.StaticText(text.communicationTimeout)
+        eg.EqualizeWidths((st1, st2, st3, st4, st5, st6))
         box1 = panel.BoxedGroup(text.tcpBox, (st1, portCtrl))
         box2 = panel.BoxedGroup(text.securityBox, (st2, passwordCtrl))
         box3 = panel.BoxedGroup(text.eventGenerationBox, (st3, eventPrefixCtrl),(st4,sourceIPCtrl))
+        box4 = panel.BoxedGroup(text.timeoutBox, (st5,connectionTimeoutCtrl),(st6,communicationTimeoutCtrl))
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
             (box2, 0, wx.EXPAND|wx.TOP, 10),
             (box3, 0, wx.EXPAND|wx.TOP, 10),
+            (box4, 0, wx.EXPAND|wx.TOP, 10),
         ])
 
         while panel.Affirmed():
@@ -446,7 +458,9 @@ class TCPEvents(eg.PluginBase):
                 portCtrl.GetValue(),
                 passwordCtrl.GetValue(),
                 eventPrefixCtrl.GetValue(),
-                sourceIPCtrl.GetValue()
+                sourceIPCtrl.GetValue(),
+                connectionTimeoutCtrl.GetValue(),
+                communicationTimeoutCtrl.GetValue()
             )
 
 
@@ -456,15 +470,13 @@ class SendEvent(eg.ActionBase):
 
     name = "Send an Event"
 
-    def __call__(self,destIP, destPort, passwd, evtPref, evtSuf, evtPayloadStr, timeoutBef, timeoutAft, evtPayload):
+    def __call__(self,destIP, destPort, passwd, evtPref, evtSuf, evtPayloadStr, evtPayload):
         if destIP=="": eg.PrintError("Destination address field left blank.")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
         self.eventPrefix=eg.ParseString(evtPref)
         self.eventSuffix=eg.ParseString(evtSuf)
-        self.timeoutBefore=timeoutBef
-        self.timeoutAfter=timeoutAft
         if (evtPayloadStr is not None) and (evtPayloadStr != ""):
             try:
                 self.eventPayload=eval(evtPayloadStr)
@@ -476,7 +488,7 @@ class SendEvent(eg.ActionBase):
         return self.Send()
 
 
-    def Configure(self, destIP="", destPort=1024, passwd="", evtPref="", evtSuf="{eg.result}", evtPayloadStr="", timeoutBef=5.0, timeoutAft=5.0, evtPayload=None):
+    def Configure(self, destIP="", destPort=1024, passwd="", evtPref="", evtSuf="{eg.result}", evtPayloadStr="", evtPayload=None):
         text=Text
         panel = eg.ConfigPanel()
 
@@ -489,8 +501,6 @@ class SendEvent(eg.ActionBase):
         evtPrefCtrl = panel.TextCtrl(evtPref)
         evtSufCtrl = panel.TextCtrl(evtSuf)
         evtPldCtrl = panel.TextCtrl(evtPayloadStr)
-        timeoutBeforeCtrl = panel.SpinNumCtrl(timeoutBef, integerWidth=2, increment=0.01)
-        timeoutAfterCtrl = panel.SpinNumCtrl(timeoutAft, integerWidth=2, increment=0.01)
 
         st1 = panel.StaticText(text.address)
         st2 = panel.StaticText(text.port)
@@ -498,19 +508,15 @@ class SendEvent(eg.ActionBase):
         st4 = panel.StaticText(text.prefix)
         st5 = panel.StaticText(text.suffix)
         st6 = panel.StaticText(text.payload)
-        st7 = panel.StaticText(text.timeoutBeforeTxt)
-        st8 = panel.StaticText(text.timeoutAfterTxt)
 
-        eg.EqualizeWidths((st1, st2, st3, st4, st5, st6, st7, st8))
+        eg.EqualizeWidths((st1, st2, st3, st4, st5, st6))
 
         box1 = panel.BoxedGroup(text.tcpBox, (st1, addrCtrl), (st2,portCtrl))
         box2 = panel.BoxedGroup(text.securityBox, (st3, passwordCtrl))
         box3 = panel.BoxedGroup(
             text.eventGenerationBox, (st4, evtPrefCtrl),
             (st5, evtSufCtrl),
-            (st6, evtPldCtrl),
-            (st7, timeoutBeforeCtrl),
-            (st8, timeoutAfterCtrl)
+            (st6, evtPldCtrl)
         )
 
         panel.sizer.AddMany([
@@ -527,18 +533,16 @@ class SendEvent(eg.ActionBase):
                 evtPrefCtrl.GetValue(),
                 evtSufCtrl.GetValue(),
                 evtPldCtrl.GetValue(),
-                timeoutBeforeCtrl.GetValue(),
-                timeoutAfterCtrl.GetValue(),
                 None
             )
 
     def Send(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(self.timeoutBefore)
+        sock.settimeout(self.plugin.connectionTimeout)
         try:
             sock.connect((self.host, self.port))
-            sock.settimeout(self.timeoutAfter)
+            sock.settimeout(self.plugin.communicationTimeout)
             # First wake up the server, for security reasons it does not
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
@@ -621,14 +625,12 @@ class SendEvent(eg.ActionBase):
 class SendData(eg.ActionBase):
     name = "Send Data"
 
-    def __call__(self,destIP, destPort ,passwd , dataName, dataToEval, timeoutBef, timeoutAft, data):
+    def __call__(self,destIP, destPort ,passwd , dataName, dataToEval, data):
         if destIP=="": eg.PrintError("Destination address field is blank")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
         self.dataName=eg.ParseString(dataName)
-        self.timeoutBefore=timeoutBef
-        self.timeoutAfter=timeoutAft
         if (dataToEval is not None) and (dataToEval != ""):
             try:
                 self.data=eval(dataToEval)
@@ -639,7 +641,7 @@ class SendData(eg.ActionBase):
             self.data=data
         return self.Send()
 
-    def Configure(self,destIP="", destPort=1024,passwd="",dataName="data1", dataToEval="", timeoutBef=5.0, timeoutAft=5.0, data=None):
+    def Configure(self,destIP="", destPort=1024,passwd="",dataName="data1", dataToEval="", data=None):
         text=Text
         panel = eg.ConfigPanel()
 
@@ -648,21 +650,17 @@ class SendData(eg.ActionBase):
         passwordCtrl = panel.TextCtrl(passwd, style=wx.TE_PASSWORD)
         dataNameCtrl = panel.TextCtrl(dataName)
         dataCtrl = panel.TextCtrl(dataToEval)
-        timeoutBeforeCtrl = panel.SpinNumCtrl(timeoutBef, integerWidth=2, increment=0.01)
-        timeoutAfterCtrl = panel.SpinNumCtrl(timeoutAft, integerWidth=2, increment=0.01)
 
         st1 = panel.StaticText(text.address)
         st2 = panel.StaticText(text.port)
         st3 = panel.StaticText(text.password)
         st4 = panel.StaticText(text.dataName)
         st5 = panel.StaticText(text.dataToSend)
-        st6 = panel.StaticText(text.timeoutBeforeTxt)
-        st7 = panel.StaticText(text.timeoutAfterTxt)
-        eg.EqualizeWidths((st1, st2, st3, st4, st5, st6, st7))
+        eg.EqualizeWidths((st1, st2, st3, st4, st5))
 
         box1 = panel.BoxedGroup(text.tcpBox, (st1, addrCtrl), (st2,portCtrl))
         box2 = panel.BoxedGroup(text.securityBox, (st3, passwordCtrl))
-        box3 = panel.BoxedGroup(text.dataBox, (st4, dataNameCtrl), (st5, dataCtrl), (st6, timeoutBeforeCtrl), (st7, timeoutAfterCtrl))
+        box3 = panel.BoxedGroup(text.dataBox, (st4, dataNameCtrl), (st5, dataCtrl))
 
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
@@ -677,8 +675,6 @@ class SendData(eg.ActionBase):
                 passwordCtrl.GetValue(),
                 dataNameCtrl.GetValue(),
                 dataCtrl.GetValue(),
-                timeoutBeforeCtrl.GetValue(),
-                timeoutAfterCtrl.GetValue(),
                 None
             )
 
@@ -686,10 +682,10 @@ class SendData(eg.ActionBase):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #self.socket = sock
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(self.timeoutBefore)
+        sock.settimeout(self.plugin.connectionTimeout)
         try:
             sock.connect((self.host, self.port))
-            sock.settimeout(self.timeoutAfter)
+            sock.settimeout(self.plugin.communicationTimeout)
             # First wake up the server, for security reasons it does not
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
@@ -790,17 +786,15 @@ class GetData(eg.ActionBase):
 class RequestData(eg.ActionBase):
     name = "Request Data from a remote host"
 
-    def __call__(self,destIP, destPort, passwd, data, timeoutBef, timeoutAft):
+    def __call__(self,destIP, destPort, passwd, data):
         if destIP=="": eg.PrintError("Destination address field is blank")
         self.host=eg.ParseString(destIP)
         self.port=destPort
         self.password=eg.ParseString(passwd)
         self.data=data
-        self.timeoutBefore=timeoutBef
-        self.timeoutAfter=timeoutAft
         return self.Send()
 
-    def Configure(self,destIP="", destPort=1024, passwd="", data="", timeoutBef=5.0, timeoutAft=5.0):
+    def Configure(self,destIP="", destPort=1024, passwd="", data=""):
         text=Text
         panel = eg.ConfigPanel()
 
@@ -808,20 +802,16 @@ class RequestData(eg.ActionBase):
         portCtrl = panel.SpinIntCtrl(destPort, max=65535)
         passwordCtrl = panel.TextCtrl(passwd, style=wx.TE_PASSWORD)
         dataCtrl = panel.TextCtrl(data)
-        timeoutBeforeCtrl = panel.SpinNumCtrl(timeoutBef, integerWidth=2, increment=0.01)
-        timeoutAfterCtrl = panel.SpinNumCtrl(timeoutAft, integerWidth=2, increment=0.01)
 
         st1 = panel.StaticText(text.address)
         st2 = panel.StaticText(text.port)
         st3 = panel.StaticText(text.password)
         st4 = panel.StaticText(text.dataToReceive)
-        st5 = panel.StaticText(text.timeoutBeforeTxt)
-        st6 = panel.StaticText(text.timeoutAfterTxt)
-        eg.EqualizeWidths((st1, st2, st3, st4, st5, st6))
+        eg.EqualizeWidths((st1, st2, st3, st4))
 
         box1 = panel.BoxedGroup(text.tcpBox, (st1, addrCtrl), (st2,portCtrl))
         box2 = panel.BoxedGroup(text.securityBox, (st3, passwordCtrl))
-        box3 = panel.BoxedGroup(text.dataBox, (st4, dataCtrl), (st5, timeoutBeforeCtrl), (st6, timeoutAfterCtrl))
+        box3 = panel.BoxedGroup(text.dataBox, (st4, dataCtrl))
 
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
@@ -835,18 +825,16 @@ class RequestData(eg.ActionBase):
                 portCtrl.GetValue(),
                 passwordCtrl.GetValue(),
                 dataCtrl.GetValue(),
-                timeoutBeforeCtrl.GetValue(),
-                timeoutAfterCtrl.GetValue()
             )
 
     def Send(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #self.socket = sock
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(self.timeoutBefore)
+        sock.settimeout(self.plugin.connectionTimeout)
         try:
             sock.connect((self.host, self.port))
-            sock.settimeout(self.timeoutAfter)
+            sock.settimeout(self.plugin.communicationTimeout)
             # First wake up the server, for security reasons it does not
             # respond by itself it needs this string, why this odd word ?
             # well if someone is scanning ports "connect" would be very
