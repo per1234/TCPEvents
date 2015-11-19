@@ -16,10 +16,10 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 # This plugin is a tcp server and client that can send and receive data.
-# Data can be events, request data, send data
-# This plugin is based on the network event receiver and sender plugins by bitmonster, and is compatible with them
+# Data can be events, request data, send data.
+# This plugin is based on the Network Event Receiver and Sender plugins by bitmonster, and is compatible with them.
 #
-# $LastChangedDate: 2015-08-06 3:30:00 +0100$
+# $LastChangedDate: 2015-11-18 3:30:00 +0100$
 # $LastChangedRevision: 4 $
 # $LastChangedBy: per1234 $
 
@@ -91,14 +91,14 @@ README = """\
 import eg
 
 eg.RegisterPlugin(
-    name = "TCP Events",
-    url = "https://github.com/per1234/TCPEvents",
-    description = "Receives and sends events and/or data over TCP",
-    help = README,
-    version = "2.1." + "$LastChangedRevision: 0 $".split()[1],
-    author = "miljbee",
-    canMultiLoad = True,
-    icon = (
+    name="TCP Events",
+    url="https://github.com/per1234/TCPEvents",
+    description="Receives and sends events and/or data over TCP",
+    help=README,
+    version="2.1." + "$LastChangedRevision: 0 $".split()[1],
+    author="miljbee",
+    canMultiLoad=True,
+    icon=(
         "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/"
         "AAAACXBIWXMAAAsSAAALEgHS3X78AAAAB3RJTUUH1gIQFgQb1MiCRwAAAVVJREFUOMud"
         "kjFLw2AQhp8vif0fUlPoIgVx6+AgopNI3fwBViiIoOAgFaugIDhUtP4BxWDs4CI4d3MR"
@@ -109,7 +109,7 @@ eg.RegisterPlugin(
         "WRlxsa4sp1ydkiRxkstmlEFRrWT4nrRer3vmlf6mb883fK8AoF1d+Bqc6Xkt+cufT6e3"
         "dnb9DJJrq+uYpunZ2WcFfA0ol8v8N5Qgvr/EN8Lzfbs+L0goAAAAAElFTkSuQmCC"
     ),
-	guid = '{198090B7-0574-4F91-B2E7-1AF5BB37E2DE}'
+    guid='{198090B7-0574-4F91-B2E7-1AF5BB37E2DE}'
 )
 
 
@@ -158,10 +158,9 @@ else:
         pass
 
 
-
 class TCPEvents(eg.PluginBase):
     text = Text
-    receivedData={}
+    receivedData = {}
 
     def __init__(self):
         self.AddEvents()
@@ -171,8 +170,7 @@ class TCPEvents(eg.PluginBase):
         self.AddAction(RequestData)
         self.server = None
 
-
-    def __start__(self, port, password, prefix, inclSrcIP, conTimeout = DefaultValues.defaultTimeout, comTimeout = DefaultValues.defaultTimeout):
+    def __start__(self, port, password, prefix, inclSrcIP, conTimeout=DefaultValues.defaultTimeout, comTimeout=DefaultValues.defaultTimeout):
         self.lock = threading.Lock()
         self.port = port
         self.password = password
@@ -187,29 +185,26 @@ class TCPEvents(eg.PluginBase):
             eg.PrintError("Exception in TCPEvents.__start__")
             raise self.Exception(exc[1])
 
-
     def __stop__(self):
         if self.server:
             self.server.close()
         self.server = None
-
 
     def __close__(self):
         if self.server:
             self.server.close()
         self.server = None
 
-
-    def Configure(self, port = 1024, password = "", prefix = "TCP", inclSrcIP = True, conTimeout = DefaultValues.defaultTimeout, comTimeout = DefaultValues.defaultTimeout):
+    def Configure(self, port=1024, password="", prefix="TCP", inclSrcIP=True, conTimeout=DefaultValues.defaultTimeout, comTimeout=DefaultValues.defaultTimeout):
         text = self.text
         panel = eg.ConfigPanel()
 
-        portCtrl = panel.SpinIntCtrl(port, max = 65535)
-        passwordCtrl = panel.TextCtrl(password, style = wx.TE_PASSWORD)
+        portCtrl = panel.SpinIntCtrl(port, max=65535)
+        passwordCtrl = panel.TextCtrl(password, style=wx.TE_PASSWORD)
         eventPrefixCtrl = panel.TextCtrl(prefix)
         sourceIPCtrl = panel.CheckBox(inclSrcIP)
-        connectionTimeoutCtrl = panel.SpinNumCtrl(conTimeout, integerWidth = 2, increment = 0.01)
-        communicationTimeoutCtrl = panel.SpinNumCtrl(comTimeout, integerWidth = 2, increment = 0.01)
+        connectionTimeoutCtrl = panel.SpinNumCtrl(conTimeout, integerWidth=2, increment=0.01)
+        communicationTimeoutCtrl = panel.SpinNumCtrl(comTimeout, integerWidth=2, increment=0.01)
         st1 = panel.StaticText(text.port)
         st2 = panel.StaticText(text.password)
         st3 = panel.StaticText(text.eventPrefix)
@@ -219,13 +214,13 @@ class TCPEvents(eg.PluginBase):
         eg.EqualizeWidths((st1, st2, st3, st4, st5, st6))
         box1 = panel.BoxedGroup(text.tcpBox, (st1, portCtrl))
         box2 = panel.BoxedGroup(text.securityBox, (st2, passwordCtrl))
-        box3 = panel.BoxedGroup(text.eventGenerationBox, (st3, eventPrefixCtrl), (st4,sourceIPCtrl))
-        box4 = panel.BoxedGroup(text.timeoutBox, (st5,connectionTimeoutCtrl), (st6,communicationTimeoutCtrl))
+        box3 = panel.BoxedGroup(text.eventGenerationBox, (st3, eventPrefixCtrl), (st4, sourceIPCtrl))
+        box4 = panel.BoxedGroup(text.timeoutBox, (st5, connectionTimeoutCtrl), (st6, communicationTimeoutCtrl))
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
-            (box2, 0, wx.EXPAND|wx.TOP, 10),
-            (box3, 0, wx.EXPAND|wx.TOP, 10),
-            (box4, 0, wx.EXPAND|wx.TOP, 10),
+            (box2, 0, wx.EXPAND | wx.TOP, 10),
+            (box3, 0, wx.EXPAND | wx.TOP, 10),
+            (box4, 0, wx.EXPAND | wx.TOP, 10),
         ])
 
         while panel.Affirmed():
@@ -237,7 +232,6 @@ class TCPEvents(eg.PluginBase):
                 connectionTimeoutCtrl.GetValue(),
                 communicationTimeoutCtrl.GetValue()
             )
-
 
 
 class ServerHandler(asynchat.async_chat):
@@ -267,11 +261,9 @@ class ServerHandler(asynchat.async_chat):
             self.state = self.state3
         self.receivedDataName = ""
 
-
     def handle_close(self):
         self.plugin.EndLastEvent()
         asynchat.async_chat.handle_close(self)
-
 
     def collect_incoming_data(self, data):
         """Put data read from socket to a buffer"""
@@ -279,12 +271,10 @@ class ServerHandler(asynchat.async_chat):
         log("<<" + repr(data))
         self.data = self.data + data
 
-
     if DEBUG:
         def push(self, data):
             log(">>", repr(data))
             asynchat.async_chat.push(self, data)
-
 
     def found_terminator(self):
         """
@@ -297,9 +287,8 @@ class ServerHandler(asynchat.async_chat):
         # Reset input buffer
         self.data = ''
 
-        #call state handler
+        # call state handler
         self.state(line)
-
 
     def initiate_close(self):
         try:
@@ -307,14 +296,13 @@ class ServerHandler(asynchat.async_chat):
             self.close_when_done()
         except:
             eg.PrintError("Error in ServerHandler.initiate_close(push/close_when_done): " + str(sys.exc_info()))
-        #asynchat.async_chat.handle_close(self)
+        # asynchat.async_chat.handle_close(self)
         self.plugin.EndLastEvent()
         self.state = self.state1
         try:
             self.close()
         except:
             eg.PrintError("Error in ServerHandler.initiate_close (close)" + str(sys.exc_info()))
-
 
     def state1(self, line):
         """get keyword "quintessence\n" and send cookie"""
@@ -324,24 +312,23 @@ class ServerHandler(asynchat.async_chat):
         else:
             self.initiate_close()
 
-
     def state2(self, line):
         """get MD5 digest"""
-        line=line.strip()
+        line = line.strip()
         digest = line.strip()[-32:]
         if digest == "":
             pass
         elif digest.upper() == self.hex_md5:
             if len(line) > 32:
-                self.clientType = "TCPEvents" if line[:-32]=="TCPEvents" else "Network Event Sender"
-            else: self.clientType = "Network Event Sender"
-            #print "From Server : clientType = " + self.clientType
+                self.clientType = "TCPEvents" if line[:-32] == "TCPEvents" else "Network Event Sender"
+            else:
+                self.clientType = "Network Event Sender"
+            # print "From Server: clientType = " + self.clientType
             self.push(" accept\n")
             self.state = self.state3
         else:
             eg.PrintError("NetworkReceiver MD5 error")
             self.initiate_close()
-
 
     def state3(self, line):
         line = line.decode(eg.systemEncoding)
@@ -366,7 +353,7 @@ class ServerHandler(asynchat.async_chat):
                 result = None
                 self.initiate_close()
             if result is not None:
-                self.push("result " + str(result)+"\n")
+                self.push("result " + str(result) + "\n")
                 self.initiate_close()
         elif self.clientType == "TCPEvents" and line[:9] == "dataName ":
             self.receivedDataName = str(line[9:])
@@ -392,9 +379,9 @@ class ServerHandler(asynchat.async_chat):
                             line = line[:-1]
                         if line.find(".") > 0:
                             self.plugin.info.eventPrefix = line[:line.find(".")]
-                            line=line[line.find(".") + 1:]
+                            line = line[line.find(".") + 1:]
                         else:
-                            self.plugin.info.eventPrefix=self.plugin.prefix
+                            self.plugin.info.eventPrefix = self.plugin.prefix
 
                         if len(self.payload) == 0:
                             self.plugin.TriggerEnduringEvent(line, None)
@@ -429,10 +416,9 @@ class ServerHandler(asynchat.async_chat):
             self.payload = [self.ip] if self.plugin.includeSourceIP else []
 
 
-
 class Server(asyncore.dispatcher):
 
-    def __init__ (self, port, password, handler):
+    def __init__(self, port, password, handler):
         try:
             self.handler = handler
             self.password = password
@@ -458,8 +444,7 @@ class Server(asyncore.dispatcher):
         except:
             eg.PrintError("TCPEvents: Error in Server.__init__: " + str(sys.exc_info()))
 
-
-    def handle_accept (self):
+    def handle_accept(self):
         """Called by asyncore engine when new connection arrives"""
         # Accept new connection
         log("handle_accept")
@@ -476,12 +461,11 @@ class Server(asyncore.dispatcher):
             eg.PrintError("TCPEvents: Error in handle accept: " + str(sys.exc_info()))
 
 
-
 class SendEvent(eg.ActionBase):
 
     name = "Send an Event"
 
-    def __call__(self,destIP, destPort, passwd, evtPref, evtSuf, evtPayloadStr, evtPayload):
+    def __call__(self, destIP, destPort, passwd, evtPref, evtSuf, evtPayloadStr, evtPayload):
         if destIP == "":
             eg.PrintError("Destination address field left blank.")
         self.host = eg.ParseString(destIP)
@@ -499,17 +483,16 @@ class SendEvent(eg.ActionBase):
             self.eventPayload = evtPayload
         return self.Send()
 
-
-    def Configure(self, destIP = "", destPort = 1024, passwd = "", evtPref = "", evtSuf = "{eg.result}", evtPayloadStr = "", evtPayload = None):
+    def Configure(self, destIP="", destPort=1024, passwd="", evtPref="", evtSuf="{eg.result}", evtPayloadStr="", evtPayload=None):
         text = Text
         panel = eg.ConfigPanel()
 
-        #if evtPref=="":
-        #    evtPref=self.plugin.prefix
+        # if evtPref == "":
+        #    evtPref = self.plugin.prefix
 
         addrCtrl = panel.TextCtrl(destIP)
-        portCtrl = panel.SpinIntCtrl(destPort, max = 65535)
-        passwordCtrl = panel.TextCtrl(passwd, style = wx.TE_PASSWORD)
+        portCtrl = panel.SpinIntCtrl(destPort, max=65535)
+        passwordCtrl = panel.TextCtrl(passwd, style=wx.TE_PASSWORD)
         evtPrefCtrl = panel.TextCtrl(evtPref)
         evtSufCtrl = panel.TextCtrl(evtSuf)
         evtPldCtrl = panel.TextCtrl(evtPayloadStr)
@@ -534,8 +517,8 @@ class SendEvent(eg.ActionBase):
 
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
-            (box2, 0, wx.EXPAND|wx.TOP, 10),
-            (box3, 0, wx.EXPAND|wx.TOP, 10),
+            (box2, 0, wx.EXPAND | wx.TOP, 10),
+            (box3, 0, wx.EXPAND | wx.TOP, 10),
         ])
 
         while panel.Affirmed():
@@ -548,7 +531,6 @@ class SendEvent(eg.ActionBase):
                 evtPldCtrl.GetValue(),
                 None
             )
-
 
     def Send(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -600,7 +582,7 @@ class SendEvent(eg.ActionBase):
                     serverType = "TCPEvents"
                 else:
                     serverType = "Network Event Receiver"
-                #print "From Client : Server Type = " + serverType
+                # print "From Client: Server Type = " + serverType
 
             # now just pipe those commands to the server
             if (self.eventPrefix is not None) and (len(self.eventPrefix) > 0) and (serverType == "TCPEvents"):
@@ -609,7 +591,7 @@ class SendEvent(eg.ActionBase):
                 eventString = self.eventSuffix
 
             if (self.eventPayload is not None):
-                #payload will be passed to eval by the server so that we can get back the exact same object(s) we have here
+                # payload will be passed to eval by the server so that we can get back the exact same object(s) we have here
                 srcData = self.eventPayload
                 if serverType == "TCPEvents":
                     srcDataLst = []
@@ -618,12 +600,12 @@ class SendEvent(eg.ActionBase):
                 else:
                     srcDataStr = str(srcData)
                 sock.sendall(
-                        (u'payload '+srcDataStr+u'\n').encode("utf-8")
-                    )
+                    (u'payload ' + srcDataStr + u'\n').encode("utf-8")
+                )
 
             if serverType != "TCPEvents":
                 sock.sendall("payload withoutRelease\n")
-            sock.sendall((eventString+"\n").encode("utf-8"))
+            sock.sendall((eventString + "\n").encode("utf-8"))
             # tell the server that we are done nicely.
             sock.sendall("close\n")
             sock.close()
@@ -636,11 +618,10 @@ class SendEvent(eg.ActionBase):
             return None
 
 
-
 class SendData(eg.ActionBase):
     name = "Send Data"
 
-    def __call__(self,destIP, destPort ,passwd , dataName, dataToEval, data):
+    def __call__(self, destIP, destPort, passwd, dataName, dataToEval, data):
         if destIP == "":
             eg.PrintError("Destination address field is blank")
         self.host = eg.ParseString(destIP)
@@ -657,14 +638,13 @@ class SendData(eg.ActionBase):
             self.data = data
         return self.Send()
 
-
-    def Configure(self,destIP = "", destPort = 1024, passwd = "", dataName = "data1", dataToEval = "", data = None):
+    def Configure(self, destIP="", destPort=1024, passwd="", dataName="data1", dataToEval="", data=None):
         text = Text
         panel = eg.ConfigPanel()
 
         addrCtrl = panel.TextCtrl(destIP)
-        portCtrl = panel.SpinIntCtrl(destPort, max = 65535)
-        passwordCtrl = panel.TextCtrl(passwd, style = wx.TE_PASSWORD)
+        portCtrl = panel.SpinIntCtrl(destPort, max=65535)
+        passwordCtrl = panel.TextCtrl(passwd, style=wx.TE_PASSWORD)
         dataNameCtrl = panel.TextCtrl(dataName)
         dataCtrl = panel.TextCtrl(dataToEval)
 
@@ -681,8 +661,8 @@ class SendData(eg.ActionBase):
 
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
-            (box2, 0, wx.EXPAND|wx.TOP, 10),
-            (box3, 0, wx.EXPAND|wx.TOP, 10),
+            (box2, 0, wx.EXPAND | wx.TOP, 10),
+            (box3, 0, wx.EXPAND | wx.TOP, 10),
         ])
 
         while panel.Affirmed():
@@ -694,7 +674,6 @@ class SendData(eg.ActionBase):
                 dataCtrl.GetValue(),
                 None
             )
-
 
     def Send(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -776,11 +755,10 @@ class SendData(eg.ActionBase):
             return None
 
 
-
 class GetData(eg.ActionBase):
-    name="Retrieve Received Data"
+    name = "Retrieve Received Data"
 
-    def __call__(self,dataName):
+    def __call__(self, dataName):
         if dataName in self.plugin.receivedData:
             result = self.plugin.receivedData[dataName]
         else:
@@ -788,8 +766,7 @@ class GetData(eg.ActionBase):
             result = None
         return result
 
-
-    def Configure(self,dataName="data1"):
+    def Configure(self, dataName="data1"):
         panel = eg.ConfigPanel()
         dataNameCtrl = panel.TextCtrl(dataName)
         st1 = panel.StaticText("Name of the data to retrieve: ")
@@ -804,26 +781,25 @@ class GetData(eg.ActionBase):
             )
 
 
-
 class RequestData(eg.ActionBase):
     name = "Request Data from a remote host"
 
     def __call__(self, destIP, destPort, passwd, data):
-        if destIP == "": eg.PrintError("Destination address field is blank")
+        if destIP == "":
+            eg.PrintError("Destination address field is blank")
         self.host = eg.ParseString(destIP)
         self.port = destPort
         self.password = eg.ParseString(passwd)
         self.data = data
         return self.Send()
 
-
-    def Configure(self,destIP = "", destPort = 1024, passwd = "", data = ""):
+    def Configure(self, destIP="", destPort=1024, passwd="", data=""):
         text = Text
         panel = eg.ConfigPanel()
 
         addrCtrl = panel.TextCtrl(destIP)
-        portCtrl = panel.SpinIntCtrl(destPort, max = 65535)
-        passwordCtrl = panel.TextCtrl(passwd, style = wx.TE_PASSWORD)
+        portCtrl = panel.SpinIntCtrl(destPort, max=65535)
+        passwordCtrl = panel.TextCtrl(passwd, style=wx.TE_PASSWORD)
         dataCtrl = panel.TextCtrl(data)
 
         st1 = panel.StaticText(text.address)
@@ -838,8 +814,8 @@ class RequestData(eg.ActionBase):
 
         panel.sizer.AddMany([
             (box1, 0, wx.EXPAND),
-            (box2, 0, wx.EXPAND|wx.TOP, 10),
-            (box3, 0, wx.EXPAND|wx.TOP, 10),
+            (box2, 0, wx.EXPAND | wx.TOP, 10),
+            (box3, 0, wx.EXPAND | wx.TOP, 10),
         ])
 
         while panel.Affirmed():
@@ -849,7 +825,6 @@ class RequestData(eg.ActionBase):
                 passwordCtrl.GetValue(),
                 dataCtrl.GetValue(),
             )
-
 
     def Send(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -889,7 +864,7 @@ class RequestData(eg.ActionBase):
                 digest = digest + "\n"
 
                 # Send it to the server
-                sock.sendall("TCPEvents"+digest)
+                sock.sendall("TCPEvents" + digest)
 
                 # Get the answer
                 answer = sock.recv(512)
@@ -920,7 +895,8 @@ class RequestData(eg.ActionBase):
                 except:
                     pass
                 try:
-                    if not close:sock.sendall("close\n")
+                    if not close:
+                        sock.sendall("close\n")
                 finally:
                     sock.close()
                 answer = answer.strip()
@@ -928,10 +904,10 @@ class RequestData(eg.ActionBase):
                     try:
                         result = eval(answer[7:])[0]
                     except:
-                        eg.PrintError("Can not eval the response from the server: " +answer+". Returning None.")
+                        eg.PrintError("Can not eval the response from the server: " + answer + ". Returning None.")
                         result = None
                 else:
-                    eg.PrintError("The server didn't send back a response. It might not be able to evaluate the request (" + self.data +"==>" + answer + ").")
+                    eg.PrintError("The server didn't send back a response. It might not be able to evaluate the request (" + self.data + "==>" + answer + ").")
                     result = None
             else:
                 eg.PrintError("The server isn't a TCPEvents server(is it a Network Event Receiver?). Your request will be sent in the Payload")
