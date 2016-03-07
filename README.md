@@ -65,3 +65,19 @@ TCPEvents uses MD5 encrypted APOP style authentication to avoid sending password
 - Security vulnerability patch
 - Unauthenticated option
 - Set timeouts via configuration
+
+
+#### Compatible Software
+- Free
+  - EtherEvent: https://github.com/per1234/EtherEvent - Arduino library for sending/receiving events.
+  - EgiGeoZone Geofence: https://play.google.com/store/apps/details?id=de.egi.geofence.geozone with the Arduino EtherEvent plugin: https://play.google.com/store/apps/details?id=de.egi.geofence.geozone.plugin.arduinoetherevent
+  - EventGhost automation with LabVIEW: http://decibel.ni.com/content/docs/DOC-13135 - LabVIEW network event sender and receiver VI. The receiver requires a large timeout value.
+  - eventghost-android: http://github.com/timhoeck/eventghost-android - Android network event app
+  - EGRemote Lite: http://play.google.com/store/apps/details?id=eu.rml.lab.egremote_lite - Android network event app
+  - RemoteGhost: http://forum.xda-developers.com/showthread.php?t=2076716 - Windows phone network event app
+  - ProntoScript Library: http://remotecentral.com/cgi-bin/mboard/prontopro/thread.cgi?3646 - Philips Pronto Home Control Panel communication
+  - Android/Eventghost Communication Suite: http://ip-symcon.de/forum/threads/19614-Android-Eventghost-Communication-Suite - IP-Symcon(pay software) automation system communication
+- Pay
+  - terRemote - Android network event app
+  - EGRemote - Android network event app
+  - RemoteGhostPro - Windows Phone network event app
