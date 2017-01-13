@@ -81,3 +81,7 @@ TCPEvents uses MD5 encrypted APOP style authentication to avoid sending password
   - terRemote - Android network event app
   - EGRemote - Android network event app
   - RemoteGhostPro - Windows Phone network event app
+
+
+#### Contributing
+Pull requests or issue reports are welcome! Please see the [contribution rules](https://github.com/per1234/TCPEvents/blob/master/CONTRIBUTING.md) for instructions.
