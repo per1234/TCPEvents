@@ -15,7 +15,7 @@ TCPEvents was created as a replacement for the very limited Network Event Sender
 
 <a id="usage"></a>
 #### Usage
-You can use {} in most configuration fields to have EventGhost replace the content with the corresponding variable.
+You can use {} in most configuration fields to have TCPEvents replace the content with the corresponding variable.
 - **Plugin Configuration**:
   - **TCP/IP Port** - The port used for receiving.
   - **Password** - The password must match the password used by the sender. Leave the password field blank to disable authentication. Unauthenticated operation is not supported by the Network Event Sender/Receiver plugin.

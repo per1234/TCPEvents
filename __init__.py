@@ -29,7 +29,7 @@ README = """\
 
 
 <h4></a>Usage</h4>
-<p>You can use {} in most configuration fields to have EventGhost replace the content with the corresponding variable.</p>
+<p>You can use {} in most configuration fields to have TCPEvents replace the content with the corresponding variable.</p>
 
 <ul>
 <li><p><strong>Plugin Configuration</strong>:</p>
