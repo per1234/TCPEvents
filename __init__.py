@@ -614,7 +614,7 @@ class SendEvent(eg.ActionBase):
             if eg.debugLevel:
                 eg.PrintTraceback()
             sock.close()
-            self.PrintError("An error occured while sending your event")
+            self.PrintError("An error occurred while sending your event")
             return None
 
 
