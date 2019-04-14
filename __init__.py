@@ -58,7 +58,7 @@ README = """\
 <li><strong>Data(Python expression)</strong> - Data to send.</li>
 </ul></li>
 
-<li><p><strong>Retrieve Received Data</strong> - The retrived data stored under the name is returned as eg.result. This action is not supported by the Network Event Sender/Receiver plugins.</p>
+<li><p><strong>Retrieve Received Data</strong> - The retrieved data stored under the name is returned as eg.result. This action is not supported by the Network Event Sender/Receiver plugins.</p>
 <ul>
 <li><strong>Name of the data to retrieve</strong> - Use the data name specified in the Send Data action.</li>
 </ul></li>

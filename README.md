@@ -36,7 +36,7 @@ You can use {} in most configuration fields to have TCPEvents replace the conten
   - **Name** - The name is used to retrieve received data.
   - **Data(Python expression)** - Data to send.
 
-- **Retrieve Received Data** - The retrived data stored under the name is returned as eg.result. This action is not supported by the Network Event Sender/Receiver plugins.
+- **Retrieve Received Data** - The retrieved data stored under the name is returned as eg.result. This action is not supported by the Network Event Sender/Receiver plugins.
   - **Name of the data to retrieve** - Use the data name specified in the Send Data action.
 
 - **Request Data from a remote host** - The response is returned as eg.result. No event is created. This action is not supported by the Network Event Sender/Receiver plugins. See the **Send an Event** section for documentation of duplicate fields.
